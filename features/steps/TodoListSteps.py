@@ -47,3 +47,45 @@ def step_impl(context):
 def step_impl(context):
     tasks = context.TodoList.list_tasks()
     assert not tasks, "The to-do list is not empty."
+
+@given('the to-do list contains a task with title "{title}" and description "{description}"')
+def step_add_task_with_description(context, title, description):
+    context.list_manager = ToDoList()
+    context.list_manager.add_task(title, description, '2024-08-01')
+
+@when('the user updates the task "{title}" to have a new description "{new_description}"')
+def step_update_task_description(context, title, new_description):
+    task_found = False
+    for task in context.list_manager.tasks:
+        if task.title == title:
+            task.update(description=new_description)
+            task_found = True
+            break
+    assert task_found, f'Task "{title}" not found.'
+
+@then('the task "{title}" should have description "{expected_description}"')
+def step_verify_task_description(context, title, expected_description):
+    tasks = context.list_manager.list_tasks()
+    task_str = next((task for task in tasks if title in task), None)
+    assert task_str and expected_description in task_str, f'Task "{title}" does not have the expected description "{expected_description}".'
+
+@given('the to-do list contains a task with title "{title}" and priority "{priority}"')
+def step_add_task_with_priority(context, title, priority):
+    context.list_manager = ToDoList()
+    context.list_manager.add_task(title, 'Sample description', '2024-08-01', priority)
+
+@when('the user updates the task "{title}" to have a new priority "{new_priority}"')
+def step_update_task_priority(context, title, new_priority):
+    task_found = False
+    for task in context.list_manager.tasks:
+        if task.title == title:
+            task.update(priority=new_priority)
+            task_found = True
+            break
+    assert task_found, f'Task "{title}" not found.'
+
+@then('the task "{title}" should have priority "{expected_priority}"')
+def step_verify_task_priority(context, title, expected_priority):
+    tasks = context.list_manager.list_tasks()
+    task_str = next((task for task in tasks if title in task), None)
+    assert task_str and expected_priority in task_str, f'Task "{title}" does not have the expected priority "{expected_priority}".'
