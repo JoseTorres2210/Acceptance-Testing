@@ -30,3 +30,15 @@ Feature: To Do List Manager
         | Pay bills     |
       When the user clears the to-do list
       Then the to-do list should be empty
+
+  Scenario: Edit a task
+      Given the to-do list contains a task with title "Buy groceries" and description "Buy milk"
+      When the user updates the task "Buy groceries" to have a new description "Buy bread and eggs"
+      Then the task "Buy groceries" should have description "Buy bread and eggs"
+
+  Scenario: Set and verify task priority
+    Given the to-do list contains a task with title "Complete assignment" and priority "Medium"
+    When the user updates the task "Complete assignment" to have a new priority "High"
+    Then the task "Complete assignment" should have priority "High"
+
+  
