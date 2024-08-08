@@ -1,69 +1,49 @@
 from behave import given, when, then
+from TodoList import ToDoList
 
-# Define a list to represent the to-do list
-to_do_list = []
-
-# Define a variable to capture the output of listing tasks
-output = ""
-
-# Given the to-do list is empty
 @given('the to-do list is empty')
 def step_impl(context):
-    global to_do_list
-    to_do_list = []
+    context.TodoList = ToDoList()
 
-# When the user adds a task "{task}"
-@when('the user adds a task "{task}"')
-def step_impl(context, task):
-    global to_do_list
-    to_do_list.append({'Task': task, 'Status': 'Pending'})
+@when('the user adds a task "{title}" with description "{description}" and due date "{due_date}"')
+def step_impl(context, title, description, due_date):
+    context.TodoList.add_task(title, description, due_date)
 
-# Then the to-do list should contain "{task}"
-@then('the to-do list should contain "{task}"')
-def step_impl(context, task):
-    task_exists = any(item['Task'] == task for item in to_do_list)
-    assert task_exists, f'Task "{task}" not found in the to-do list'
+@then('the to-do list should contain "{title}"')
+def step_impl(context, title):
+    tasks = context.TodoList.list_tasks()
+    assert any(title in task for task in tasks), f'Task "{title}" not found in the list.'
 
-# Given the to-do list contains tasks:
-@given('the to-do list contains tasks:')
+@given('the to-do list contains tasks')
 def step_impl(context):
-    global to_do_list
-    to_do_list = [{'Task': row['Task'], 'Status': row.get('Status', 'Pending')} for row in context.table]
+    context.TodoList = ToDoList()
+    for row in context.table:
+        context.TodoList.add_task(row['Task'], 'Sample description', '2024-08-01')
 
-# When the user lists all tasks
 @when('the user lists all tasks')
 def step_impl(context):
-    global output
-    output = "Tasks:\n" + "\n".join(f"- {task['Task']}" for task in to_do_list)
+    context.tasks = context.TodoList.list_tasks()
 
-# Then the output should contain:
-@then('the output should contain:')
+@then('the output should contain')
 def step_impl(context):
-    expected_output = context.text.strip()
-    assert output.strip() == expected_output, f"Expected output:\n{expected_output}\nActual output:\n{output}"
+    for row in context.table:
+        assert any(row['Tasks'] in task for task in context.tasks), f'Task "{row["Tasks"]}" not found in the list.'
 
-# When the user marks task "{task}" as completed
-@when('the user marks task "{task}" as completed')
-def step_impl(context, task):
-    for item in to_do_list:
-        if item['Task'] == task:
-            item['Status'] = 'Completed'
-            break
+@when('the user marks task "{title}" as completed')
+def step_impl(context, title):
+    result = context.TodoList.mark_task_completed(title)
+    assert result, f'Could not mark task "{title}" as completed.'
 
-# Then the to-do list should show task "{task}" as completed
-@then('the to-do list should show task "{task}" as completed')
-def step_impl(context, task):
-    task_found = next((item for item in to_do_list if item['Task'] == task), None)
-    assert task_found is not None, f'Task "{task}" not found in the to-do list'
-    assert task_found['Status'] == 'Completed', f'Task "{task}" is not marked as completed'
+@then('the to-do list should show task "{title}" as completed')
+def step_impl(context, title):
+    tasks = context.TodoList.list_tasks()
+    assert any(f'{title} [Low] - Completed' in task for task in tasks), f'Task "{title}" not marked as completed.'
 
-# When the user clears the to-do list
 @when('the user clears the to-do list')
 def step_impl(context):
-    global to_do_list
-    to_do_list = []
+    context.TodoList.clear_tasks()
 
-# Then the to-do list should be empty
 @then('the to-do list should be empty')
 def step_impl(context):
-    assert len(to_do_list) == 0, "The to-do list is not empty"
+    tasks = context.TodoList.list_tasks()
+    assert not tasks, "The to-do list is not empty."
